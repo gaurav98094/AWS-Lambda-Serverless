@@ -111,3 +111,103 @@ That's it! You've successfully installed Docker on your Mac using Docker Desktop
    If you provided an email address during user creation, you can send a welcome email with login details to the user. This step is optional.
 
 That's it! You've successfully created an IAM user with administrator access in AWS. This user will have full access to AWS services and resources, so be sure to manage their credentials securely.
+
+
+## Read from DynamoDB
+```python
+def get_job_details(job_name):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('jobs')
+    job_details = table.get_item(Key={'job_id': job_name})['Item']
+    return job_details
+```
+
+### Save job details to DynamoDB
+```python
+
+def get_next_file_name(job_details):
+    job_start_time = get_job_start_time()
+    job_run_bookmark_details = job_details.get('job_run_bookmark_details')
+    baseline_days = int(job_details['baseline_days'])
+    if job_run_bookmark_details:
+        dt_part = job_run_bookmark_details['last_run_file_name'].split('.')[0].split('/')[-1]
+        next_file_name = f"{dt.strftime(dt.strptime(dt_part, '%Y-%m-%d-%H') + td(hours=1), '%Y-%m-%d-%-H')}.json.gz"
+    else:
+        next_file_name = f'{dt.strftime(dt.now().date() - td(days=baseline_days), "%Y-%m-%d")}-0.json.gz'
+    return job_start_time, next_file_name
+
+
+def save_job_run_details(job_details, job_run_details, job_start_time):
+    dynamodb = boto3.resource('dynamodb')
+    job_run_details_item = {
+        'job_id': job_details['job_id'],
+        'job_run_time': job_start_time,
+        'job_run_bookmark_details': job_run_details,
+        'create_ts': int(time.mktime(dt.now().timetuple()))
+    }
+    job_run_details_table = dynamodb.Table('job_run_details')
+    job_run_details_table.put_item(Item=job_run_details_item)
+    
+    job_details_table = dynamodb.Table('jobs')
+    job_details['job_run_bookmark_details'] = job_run_details
+    job_details_table.put_item(Item=job_details)
+```
+
+## Ingest Data
+```python
+def upload_file_to_s3(file_name, bucket_name, folder):
+   print(f'Getting the {file_name} from gharchive')
+   res = requests.get(f'https://data.gharchive.org/{file_name}')
+
+   print(f'Uploading {file_name} to s3 under s3://{bucket_name}/{folder}')
+   s3_client = boto3.client('s3')
+   upload_res = s3_client.put_object(
+      Bucket=bucket_name,
+      Key=f'{folder}/{file_name}',
+      Body=res.content
+   )
+
+   return {
+      'last_run_file_name': f's3://{bucket_name}/{folder}/{file_name}',
+      'status_code': upload_res['ResponseMetadata']['HTTPStatusCode']
+   }
+```
+
+## Transformtion
+COnverting Json to Parquet
+
+```python
+
+import uuid
+import pandas as pd
+
+
+def transform_to_parquet(file_name, bucket_name, tgt_folder):
+    print(f'Creating JSON Reader for {file_name}')
+    df_reader = pd.read_json(
+        f's3://{bucket_name}/landing/ghactivity/{file_name}',
+        lines=True,
+        orient='records',
+        chunksize=10000
+    )
+    year = file_name.split('-')[0]
+    month = file_name.split('-')[1]
+    dayofmonth = file_name.split('-')[2]
+    hour = file_name.split('-')[3].split('.')[0]
+    print(f'Transforming JSON to Parquet for {file_name}')
+    for idx, df in enumerate(df_reader):
+        target_file_name = f'part-{year}-{month}-{dayofmonth}-{hour}-{uuid.uuid1()}.snappy.parquet'
+        print(f'Processing chunk {idx} of size {df.shape[0]} from {file_name}')
+        df.drop(columns=['payload']). \
+        to_parquet(
+            f's3://{bucket_name}/{tgt_folder}/year={year}/month={month}/dayofmonth={dayofmonth}/{target_file_name}',
+            index=False
+        )
+
+    return {
+        'last_run_src_file_name': file_name,
+        'last_run_tgt_file_pattern': f's3://{bucket_name}/{tgt_folder}/year={year}/month={month}/dayofmonth={dayofmonth}/part-{year}-{month}-{dayofmonth}-{hour}',
+        'status_code': 200
+    }
+    
+```
