@@ -1,5 +1,8 @@
 # AWS-Lambda-Serverless
 
+## Project Architecture
+
+<img src="images/project.jpeg">
 
 
 ### Setting Docker Desktop in 
