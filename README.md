@@ -264,3 +264,51 @@ To schedule a Lambda function to run every 15 minutes using Amazon EventBridge, 
    Review the rule configuration and click "Create rule" to save it.
 
 Now, Lambda function will be triggered every 15 minutes according to the schedule expression you defined. Make sure to test the rule to ensure it's working as expected. You can also monitor the execution of your Lambda function in the AWS Lambda Console and view any associated logs for debugging if necessary.
+
+
+<hr>
+
+## Glue Catalog
+
+Glue is a fully managed ETL (Extract, Transform, Load) service provided by AWS. Here's a step-by-step guide to create a Glue catalog and database for data in S3:
+
+1. **Sign in to the AWS Management Console**:
+   Make sure you have an AWS account and are signed in to the AWS Management Console.
+
+2. **Open AWS Glue**:
+   Go to the AWS Glue Console by searching for "Glue" in the AWS Console's search bar.
+
+3. **Create a Glue Database**:
+   - In the AWS Glue Console, navigate to the "Databases" section on the left-hand side.
+   - Click the "Add database" button.
+   - Provide a name for your database (e.g., "MyDatabase").
+   - Optionally, you can add a description.
+   - Click "Create" to create the database.
+
+4. **Create a Glue Crawler**:
+   A crawler is used to discover and catalog data stored in your S3 bucket.
+
+   - In the AWS Glue Console, navigate to the "Crawlers" section on the left-hand side.
+   - Click the "Add crawler" button.
+   - Provide a name for your crawler (e.g., "MyCrawler").
+   - Choose a data store as "S3" and provide the path to your S3 bucket.
+   - Choose an existing IAM role or create a new one with the necessary permissions for Glue to access your S3 data.
+   - Click "Next."
+   - Add any additional data sources or exclude patterns if needed.
+   - Review the configuration and click "Next."
+   - Set up a schedule for running the crawler if you want it to run periodically or run it manually.
+   - Review the final configuration and click "Finish."
+
+5. **Run the Crawler**:
+   - Select the crawler you just created in the AWS Glue Console.
+   - Click the "Run crawler" button to start the crawling process. The crawler will analyze the data in your S3 bucket and populate the Glue catalog.
+
+6. **Check the Catalog**:
+   - Once the crawler has finished running, go back to the "Databases" section in the AWS Glue Console.
+   - Select the database you created earlier (e.g., "MyDatabase").
+   - You should see tables corresponding to the data discovered in your S3 bucket.
+
+7. **Query the Data**:
+   - You can now use the Glue catalog to run SQL queries or perform ETL operations on your data using AWS Glue jobs.
+
+Your Glue catalog and database are now set up and ready to be used with the data stored in your S3 bucket. You can create Glue jobs, transformations, and other ETL processes to work with this data.
