@@ -211,3 +211,56 @@ def transform_to_parquet(file_name, bucket_name, tgt_folder):
     }
     
 ```
+
+## Scheduling Ingester using EventBridge
+
+To schedule a Lambda function to run every 15 minutes using Amazon EventBridge, you can create a rule that triggers your Lambda function at the desired interval. Here are the steps to set up this scheduling:
+
+1. **Create or Identify Your Lambda Function:**
+   Ensure that you have a Lambda function you want to run at 15-minute intervals.
+
+2. **Create an EventBridge Rule:**
+   Go to the AWS Management Console and navigate to the EventBridge service.
+
+3. **Create a Rule:**
+   Click on "Create Rule" to create a new rule. In the "Define rule" section:
+
+   - **Name:** Give your rule a descriptive name.
+   - **Description:** Add a brief description if necessary.
+
+4. **Define Event Source:**
+   In the "Define event source" section:
+
+   - For "Event Source," select "Event Source" as "Event Source Type."
+   - For "Event bus," you can choose the default event bus or create a custom one if needed.
+
+5. **Define Pattern:**
+   In the "Define pattern" section:
+
+   - For "Event matching pattern," you can leave it as "Event matching pattern."
+   - For "Event source," you can specify the source that should trigger your Lambda function.
+   - For "Event detail type," you can choose "Event detail type" if your Lambda function doesn't require specific event details.
+
+6. **Create Schedule Expression:**
+   In the "Schedule" section, you'll need to create a cron-like expression to specify the 15-minute interval. Use the following expression:
+
+   ```
+   rate(15 minutes)
+   ```
+
+   This expression will trigger your Lambda function every 15 minutes.
+
+7. **Define Targets:**
+   In the "Define targets" section:
+
+   - Click "Add target."
+   - Select "Lambda function" as the target type.
+   - Choose your Lambda function from the list.
+
+8. **Configure Input (Optional):**
+   If your Lambda function requires specific input, you can configure it in the "Configure input" section.
+
+9. **Create Rule:**
+   Review the rule configuration and click "Create rule" to save it.
+
+Now, Lambda function will be triggered every 15 minutes according to the schedule expression you defined. Make sure to test the rule to ensure it's working as expected. You can also monitor the execution of your Lambda function in the AWS Lambda Console and view any associated logs for debugging if necessary.
