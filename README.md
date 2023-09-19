@@ -312,3 +312,35 @@ Glue is a fully managed ETL (Extract, Transform, Load) service provided by AWS. 
    - You can now use the Glue catalog to run SQL queries or perform ETL operations on your data using AWS Glue jobs.
 
 Your Glue catalog and database are now set up and ready to be used with the data stored in your S3 bucket. You can create Glue jobs, transformations, and other ETL processes to work with this data.
+
+
+<hr>
+
+## Adding Layers to Lambda
+
+- *Create a folder name dep*
+```bash
+mkdir dep
+```
+
+- *Install all dependencies*
+```bash
+python3 -m pip install pandas -t dep
+python3 -m pip install requests -t dep
+```
+Note : Overall size of layes file cannot exceed above 256 MB
+```bash
+du -sh dep/
+```
+
+- * Zip the file*
+```bash
+zip -r layer.zip dep
+```
+
+- *Upload the zip file to s3*
+```bash
+aws s3 cp layer.zip s3://project
+```
+
+- *Now you can upload layer in AWS Lambda upload layer option*
